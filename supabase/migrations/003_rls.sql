@@ -1,0 +1,33 @@
+alter table public.profiles enable row level security;
+alter table public.assets enable row level security;
+alter table public.market_signals enable row level security;
+alter table public.signal_targets enable row level security;
+alter table public.subscriptions enable row level security;
+alter table public.payment_requests enable row level security;
+alter table public.notifications enable row level security;
+alter table public.user_settings enable row level security;
+alter table public.app_settings enable row level security;
+alter table public.admin_logs enable row level security;
+
+create or replace function public.is_admin() returns boolean language sql stable security definer set search_path=public as $$select exists(select 1 from public.profiles where id=auth.uid() and role='admin' and status='active')$$;
+
+create policy profiles_self on public.profiles for select using(id=auth.uid() or public.is_admin());
+create policy profiles_admin_update on public.profiles for update using(public.is_admin()) with check(public.is_admin());
+create policy assets_read on public.assets for select using(enabled=true or public.is_admin());
+create policy assets_admin on public.assets for all using(public.is_admin()) with check(public.is_admin());
+create policy signals_read on public.market_signals for select using(status='ACTIVE' and exists(select 1 from public.subscriptions s where s.user_id=auth.uid() and s.status='active' and s.expires_at>now()) or public.is_admin());
+create policy signals_admin on public.market_signals for all using(public.is_admin()) with check(public.is_admin());
+create policy targets_read on public.signal_targets for select using(public.is_admin() or exists(select 1 from public.market_signals m join public.subscriptions s on s.status='active' and s.expires_at>now() and s.user_id=auth.uid() where m.id=signal_id));
+create policy targets_admin on public.signal_targets for all using(public.is_admin()) with check(public.is_admin());
+create policy subs_self on public.subscriptions for select using(user_id=auth.uid() or public.is_admin());
+create policy subs_admin on public.subscriptions for all using(public.is_admin()) with check(public.is_admin());
+create policy pay_self_insert on public.payment_requests for insert with check(user_id=auth.uid());
+create policy pay_self_read on public.payment_requests for select using(user_id=auth.uid() or public.is_admin());
+create policy pay_admin on public.payment_requests for update using(public.is_admin()) with check(public.is_admin());
+create policy notif_self on public.notifications for select using(user_id=auth.uid() or public.is_admin());
+create policy notif_self_update on public.notifications for update using(user_id=auth.uid()) with check(user_id=auth.uid());
+create policy notif_admin_insert on public.notifications for insert with check(public.is_admin());
+create policy settings_self on public.user_settings for all using(id=auth.uid() or public.is_admin()) with check(id=auth.uid() or public.is_admin());
+create policy app_settings_read on public.app_settings for select using(true);
+create policy app_settings_admin on public.app_settings for all using(public.is_admin()) with check(public.is_admin());
+create policy logs_admin on public.admin_logs for all using(public.is_admin()) with check(public.is_admin());
