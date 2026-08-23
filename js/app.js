@@ -9,7 +9,7 @@ function page(){
  <button class="nav-item" data-view="signals"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/></svg><span>الإشارات</span></button>
  <button class="nav-item" data-view="assets"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>الأصول</span></button>
  <button class="nav-item" data-view="subscription"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg><span>الاشتراك</span></button>
- <button class="nav-item" data-view="notifications"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0112 0c0 6 2 7 2 7H4s2-1 2-7"/><path d="M10 20a2 2 0 004 0"/></svg><span>الإشعارات</span></button>
+ <button class="nav-item" data-view="notifications"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0112 0c0 6 2 7 2 7H4s2-1 2-7"/><path d="M10 20a2 2 0 004 0"/></svg><span>الجوائز</span></button>
  <button class="nav-item" data-view="profile"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg><span>الحساب</span></button>
  </nav>`;
  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{render(b.dataset.view);document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));b.classList.add('active');});
@@ -45,6 +45,13 @@ async function render(v){
  if(!user){return login();}
  if(v==='home') out.innerHTML=`<div class="card"><h3>الأصول</h3><div class="grid" id="assets"></div></div>`;
  if(v==='signals') out.innerHTML=`<h2>الإشارات</h2><div id="signals"><div class="card">جاري التحميل...</div></div>`;
+ if(v==='notifications') out.innerHTML=`<h2>الجوائز</h2>
+ <div class="card profile-card">
+  <div class="profile-label" style="margin-bottom:10px">رابط الدعوة</div>
+  <p class="muted" style="margin:0 0 12px">شارك الرابط مع أصدقائك، وأي شخص يفتحه يوصله مباشرة لتطبيق TAJER.</p>
+  <div class="code-row"><span class="user-code mono" id="p-reflink" style="font-size:12px">...</span></div>
+  <div class="ref-actions"><button class="btn secondary" id="p-ref-copy">نسخ الرابط</button><button class="btn secondary" id="p-ref-share">مشاركة</button></div>
+ </div>`;
  if(v==='subscription') out.innerHTML=`<h2>تفعيل الاشتراك</h2><div class="card"><h3>5 USDT / 30 يوم</h3><p class="muted">حوّل المبلغ إلى عنوان المحفظة الذي يحدده الأدمن ثم ارفع إثبات الدفع.</p><input id="network" class="input" placeholder="الشبكة (مثال: TRC20)"><br><br><input id="wallet" class="input" placeholder="عنوان المحفظة"><br><br><input id="txid" class="input" placeholder="TXID اختياري"><br><br><input id="shot" type="file" accept="image/*" class="input"><br><br><button id="pay" class="btn">إرسال طلب التفعيل</button></div>`;
  if(v==='profile') out.innerHTML=`<h2>الحساب</h2>
  <div class="card profile-card avatar-card">
@@ -67,17 +74,13 @@ async function render(v){
   <div class="code-row"><span class="user-code mono" id="p-code">................</span><button class="btn secondary copy-btn" id="p-copy">نسخ</button></div>
  </div>
  <div class="card profile-card">
-  <div class="profile-label" style="margin-bottom:10px">رابط الدعوة</div>
-  <div class="code-row"><span class="user-code mono" id="p-reflink" style="font-size:12px">...</span></div>
-  <div class="ref-actions"><button class="btn secondary" id="p-ref-copy">نسخ الرابط</button><button class="btn secondary" id="p-ref-share">مشاركة</button></div>
- </div>
- <div class="card profile-card">
   <div class="profile-label" style="margin-bottom:12px">اللغة</div>
   <div class="lang-row"><button class="lang-btn" data-lang="ar">🇮🇶 العربية</button><button class="lang-btn" data-lang="en">🇬🇧 English</button></div>
  </div>
  <button id="logout" class="btn danger">خروج</button>`;
  if(v==='home') await loadHome();
  if(v==='signals') await loadSignals();
+ if(v==='notifications') await loadRewards(user);
  if(v==='subscription') document.getElementById('pay').onclick=submitPayment;
  if(v==='profile') await loadProfile(user);
 }
@@ -136,6 +139,24 @@ async function loadSignals(){
  const {data:s,error}=await supabase.from('market_signals').select('*,assets(symbol,name)').eq('status','ACTIVE').order('created_at',{ascending:false});
  document.getElementById('signals').innerHTML=error?`<div class="card">${esc(error.message)}</div>`:(s||[]).map(x=>`<div class="card signal ${x.direction?.toLowerCase()}"><h3>${esc(x.direction)} — ${esc(x.assets?.symbol)}</h3><p>الدخول: ${esc(x.entry_price)}</p><p>SL: ${esc(x.stop_loss)} | TP1: ${esc(x.take_profit_1)} | TP2: ${esc(x.take_profit_2)}</p><p>القوة: ${esc(x.strength)}% — المخاطرة: ${esc(x.risk_level)}</p><p>اللوت المقترح: ${esc(x.suggested_lot)}</p><p class="muted">${esc(x.analysis)}</p></div>`).join('')||'<div class="card">لا توجد إشارات حالياً.</div>';
 }
+async function loadRewards(user){
+ const {data:p}=await supabase.from('profiles').select('user_code').eq('id',user.id).maybeSingle();
+ const code=p?.user_code||'';
+ const refLink=code?`${location.origin}${location.pathname}?ref=${code}`:'';
+ document.getElementById('p-reflink').textContent=refLink||'سيتوفر الرابط بعد إنشاء الكود';
+ document.getElementById('p-ref-copy').onclick=async()=>{
+  if(!refLink)return;
+  try{await navigator.clipboard.writeText(refLink);}catch(e){}
+  const btn=document.getElementById('p-ref-copy');
+  const old=btn.textContent; btn.textContent='تم النسخ ✓';
+  setTimeout(()=>{btn.textContent=old;},1500);
+ };
+ document.getElementById('p-ref-share').onclick=async()=>{
+  if(!refLink)return;
+  if(navigator.share){try{await navigator.share({title:'TAJER',text:'انضم لتطبيق TAJER لمتابعة إشارات التداول',url:refLink});}catch(e){}}
+  else{try{await navigator.clipboard.writeText(refLink);alert('تم نسخ الرابط');}catch(e){}}
+ };
+}
 async function loadProfile(user){
  const {data:p}=await supabase.from('profiles').select('full_name,phone,user_code,avatar_url').eq('id',user.id).maybeSingle();
  document.getElementById('p-name').textContent=p?.full_name||'—';
@@ -155,21 +176,6 @@ async function loadProfile(user){
   const btn=document.getElementById('p-copy');
   const old=btn.textContent; btn.textContent='تم النسخ ✓';
   setTimeout(()=>{btn.textContent=old;},1500);
- };
- // Referral link
- const refLink=code?`${location.origin}${location.pathname}?ref=${code}`:'';
- document.getElementById('p-reflink').textContent=refLink||'سيتوفر الرابط بعد إنشاء الكود';
- document.getElementById('p-ref-copy').onclick=async()=>{
-  if(!refLink)return;
-  try{await navigator.clipboard.writeText(refLink);}catch(e){}
-  const btn=document.getElementById('p-ref-copy');
-  const old=btn.textContent; btn.textContent='تم النسخ ✓';
-  setTimeout(()=>{btn.textContent=old;},1500);
- };
- document.getElementById('p-ref-share').onclick=async()=>{
-  if(!refLink)return;
-  if(navigator.share){try{await navigator.share({title:'TAJER',text:'انضم لتطبيق TAJER لمتابعة إشارات التداول',url:refLink});}catch(e){}}
-  else{try{await navigator.clipboard.writeText(refLink);alert('تم نسخ الرابط');}catch(e){}}
  };
  // Editable name/phone
  document.querySelectorAll('.edit-btn').forEach(btn=>btn.onclick=()=>{
