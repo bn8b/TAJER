@@ -24,14 +24,21 @@ async function render(v){
  if(v==='subscription') document.getElementById('pay').onclick=submitPayment;
 }
 function login(){
- app.innerHTML=`<main class="container"><div class="card"><h1>TAJER</h1><p class="muted" id="mode-label">تسجيل الدخول</p>
- <input id="email" class="input" type="email" placeholder="البريد الإلكتروني"><br><br>
- <input id="password" class="input" type="password" placeholder="كلمة المرور"><br><br>
+ app.innerHTML=`<div class="auth-wrap"><div class="auth-card">
+ <h1 class="auth-title">TAJER</h1>
+ <p class="auth-sub" id="mode-label">أدخل بياناتك لمتابعة إشارات التداول</p>
+ <div class="auth-tabs"><button id="tab-signin" class="active">تسجيل الدخول</button><button id="tab-signup">إنشاء حساب</button></div>
+ <div class="field"><label class="field-label">البريد الإلكتروني</label><div class="input-icon"><span>@</span><input id="email" class="input" type="email" placeholder="example@email.com"></div></div>
+ <div class="field"><label class="field-label">كلمة المرور</label><div class="input-icon"><span>*</span><input id="password" class="input" type="password" placeholder="8 أحرف على الأقل"></div></div>
+ <span class="optional-toggle" id="phone-toggle">+ إضافة رقم الهاتف (اختياري)</span>
+ <div class="field hidden" id="phone-field"><label class="field-label">رقم الهاتف</label><div class="phone-row"><select id="cc"><option value="+964">🇮🇶 +964</option><option value="+966">🇸🇦 +966</option><option value="+971">🇦🇪 +971</option></select><input id="phone" class="input" placeholder="770 123 4567"></div></div>
  <button id="submit" class="btn">دخول</button>
- <p class="muted" style="margin-top:12px"><a href="#" id="toggle">ليس لديك حساب؟ سجل الآن</a></p>
- </div></main>`;
+ </div></div>`;
  let mode='signin';
- document.getElementById('toggle').onclick=(e)=>{e.preventDefault();mode=mode==='signin'?'signup':'signin';document.getElementById('mode-label').textContent=mode==='signin'?'تسجيل الدخول':'إنشاء حساب جديد';document.getElementById('submit').textContent=mode==='signin'?'دخول':'إنشاء حساب';document.getElementById('toggle').textContent=mode==='signin'?'ليس لديك حساب؟ سجل الآن':'لديك حساب؟ سجل الدخول';};
+ const setMode=(m)=>{mode=m;document.getElementById('tab-signin').classList.toggle('active',m==='signin');document.getElementById('tab-signup').classList.toggle('active',m==='signup');document.getElementById('mode-label').textContent=m==='signin'?'أدخل بياناتك لمتابعة إشارات التداول':'خطوة واحدة تفصلك عن حسابك';document.getElementById('submit').textContent=m==='signin'?'دخول':'إنشاء حساب';};
+ document.getElementById('tab-signin').onclick=()=>setMode('signin');
+ document.getElementById('tab-signup').onclick=()=>setMode('signup');
+ document.getElementById('phone-toggle').onclick=()=>{document.getElementById('phone-field').classList.toggle('hidden');};
  document.getElementById('submit').onclick=async()=>{
   const email=document.getElementById('email').value.trim();
   const password=document.getElementById('password').value;
@@ -46,8 +53,10 @@ function login(){
  };
 }
 function otp(email){
- app.innerHTML=`<main class="container"><div class="card"><h2>رمز التحقق</h2><p class="muted">تم إرسال رمز إلى ${esc(email)}</p><input id="otp" class="input" inputmode="numeric" maxlength="6" placeholder="ادخل الرمز"><br><br><button id="verify" class="btn">تحقق</button></div></main>`;
- document.getElementById('verify').onclick=async()=>{const token=document.getElementById('otp').value.trim();const {error}=await supabase.auth.verifyOtp({email,token,type:'signup'});if(error)alert(error.message);else page()};
+ app.innerHTML=`<div class="auth-wrap"><div class="auth-card">
+ <h1 class="auth-title">رمز التحقق</h1>
+ <p class="auth-sub">تم إرسال رابط التأكيد إلى ${esc(email)}، افتح بريدك واضغط على الرابط لتفعيل حسابك</p>
+ </div></div>`;
 }
 async function loadHome(){
  const {data:p}=await supabase.from('profiles').select('user_code').maybeSingle(); document.getElementById('code').textContent=p?.user_code||'سيُنشأ تلقائياً';
