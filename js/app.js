@@ -48,13 +48,27 @@ async function render(v){
  const out=document.getElementById('view');
  const {data:{user}}=await supabase.auth.getUser();
  if(!user){return login();}
- if(v==='home') out.innerHTML=`<div class="card"><h3>الأصول</h3><div class="grid" id="assets"></div></div>`;
+ if(v==='home') out.innerHTML=`<div class="card about-card">
+  <h3 style="margin:0 0 8px">مرحباً بك في TAJER</h3>
+  <p class="muted" style="margin:0">TAJER يزوّدك بإشارات تداول احترافية للفوركس والعملات الرقمية، تشمل نقاط الدخول ووقف الخسارة والأهداف، مع تحليل مختصر لكل صفقة. فعّل اشتراكك الشهري وتابع الإشارات لحظة بلحظة، أو احصل على شهر مجاني كامل بدعوة أصدقائك من صفحة "الجوائز".</p>
+ </div>
+ <div class="card"><h3>الأصول</h3><div class="grid" id="assets"></div></div>`;
  if(v==='signals') out.innerHTML=`<div id="signals"><div class="card">جاري التحميل...</div></div>`;
  if(v==='notifications') out.innerHTML=` <div class="card profile-card">
   <div class="profile-label" style="margin-bottom:10px">رابط الدعوة</div>
   <p class="muted" style="margin:0 0 12px">شارك الرابط مع أصدقائك، وأي شخص يفتحه يوصله مباشرة لتطبيق TAJER.</p>
   <div class="code-row"><span class="user-code mono" id="p-reflink" style="font-size:12px">...</span></div>
   <div class="ref-actions"><button class="btn secondary" id="p-ref-copy">نسخ الرابط</button><button class="btn secondary" id="p-ref-share">مشاركة</button></div>
+ </div>
+ <div class="card profile-card reward-card">
+  <div class="profile-label" style="margin-bottom:6px">🎁 هدية الإحالة</div>
+  <p class="muted" style="margin:0 0 14px">ادعُ 3 أشخاص، وأي واحد منهم يفعّل اشتراكه يقربك من هديتك: شهر كامل مجاني يُضاف تلقائياً لحسابك.</p>
+  <div class="ref-progress"><div class="ref-progress-fill" id="ref-progress-fill" style="width:0%"></div></div>
+  <div class="ref-progress-label" id="ref-progress-label">0 من 3 فعّلوا اشتراكهم</div>
+ </div>
+ <div class="card profile-card">
+  <div class="profile-label" style="margin-bottom:10px">الأشخاص الذين دعوتهم</div>
+  <div id="ref-list"><p class="muted" style="margin:0">جاري التحميل...</p></div>
  </div>`;
  if(v==='subscription') out.innerHTML=`<div class="card"><h3>5 USDT / 30 يوم</h3><p class="muted">حوّل المبلغ إلى عنوان المحفظة الذي يحدده الأدمن ثم ارفع إثبات الدفع.</p><input id="network" class="input" placeholder="الشبكة (مثال: TRC20)"><br><br><input id="wallet" class="input" placeholder="عنوان المحفظة"><br><br><input id="txid" class="input" placeholder="TXID اختياري"><br><br><input id="shot" type="file" accept="image/*" class="input"><br><br><button id="pay" class="btn">إرسال طلب التفعيل</button></div>`;
  if(v==='profile') out.innerHTML=` <div class="card profile-card avatar-card">
@@ -122,7 +136,11 @@ function login(){
     alert(msg);return;
    }
    const uid=data.user?.id;
-   if(uid){await supabase.rpc('update_my_profile',{p_full_name:fullname,p_phone:phone});}
+   if(uid){
+    await supabase.rpc('update_my_profile',{p_full_name:fullname,p_phone:phone});
+    const ref=localStorage.getItem('tajer-ref');
+    if(ref){await supabase.rpc('set_referrer',{p_ref_code:ref});localStorage.removeItem('tajer-ref');}
+   }
    await supabase.auth.signOut();
    login();
    setMode('signin');
@@ -159,6 +177,22 @@ async function loadRewards(user){
   if(navigator.share){try{await navigator.share({title:'TAJER',text:'انضم لتطبيق TAJER لمتابعة إشارات التداول',url:refLink});}catch(e){}}
   else{try{await navigator.clipboard.writeText(refLink);alert('تم نسخ الرابط');}catch(e){}}
  };
+ const {data:stats}=await supabase.rpc('get_my_referral_stats').maybeSingle();
+ const qualified=stats?.qualified_count||0;
+ const inBatch=qualified%3;
+ const pct=Math.round((inBatch/3)*100);
+ const fill=document.getElementById('ref-progress-fill'); if(fill)fill.style.width=pct+'%';
+ const label=document.getElementById('ref-progress-label');
+ if(label){
+  const rewards=stats?.rewards_granted||0;
+  label.textContent=`${inBatch} من 3 فعّلوا اشتراكهم`+(rewards>0?` — تم منحك ${rewards} شهر مجاني حتى الآن 🎉`:'');
+ }
+ const {data:refs}=await supabase.rpc('get_my_referrals');
+ const list=document.getElementById('ref-list');
+ if(list){
+  list.innerHTML=(refs&&refs.length)?refs.map(r=>`<div class="ref-item"><span class="ref-item-name">${esc(r.full_name)}</span><span class="ref-item-status ${r.is_active?'active':''}">${r.is_active?'مفعّل ✓':'لم يفعّل بعد'}</span></div>`).join('')
+   :'<p class="muted" style="margin:0">لم تدعُ أي شخص بعد، شارك رابطك أعلاه.</p>';
+ }
 }
 async function loadProfile(user){
  const {data:p}=await supabase.from('profiles').select('full_name,phone,user_code,avatar_url').eq('id',user.id).maybeSingle();
