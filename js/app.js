@@ -53,8 +53,7 @@ async function render(v){
   <div class="ref-actions"><button class="btn secondary" id="p-ref-copy">نسخ الرابط</button><button class="btn secondary" id="p-ref-share">مشاركة</button></div>
  </div>`;
  if(v==='subscription') out.innerHTML=`<h2>تفعيل الاشتراك</h2><div class="card"><h3>5 USDT / 30 يوم</h3><p class="muted">حوّل المبلغ إلى عنوان المحفظة الذي يحدده الأدمن ثم ارفع إثبات الدفع.</p><input id="network" class="input" placeholder="الشبكة (مثال: TRC20)"><br><br><input id="wallet" class="input" placeholder="عنوان المحفظة"><br><br><input id="txid" class="input" placeholder="TXID اختياري"><br><br><input id="shot" type="file" accept="image/*" class="input"><br><br><button id="pay" class="btn">إرسال طلب التفعيل</button></div>`;
- if(v==='profile') out.innerHTML=`<h2>الحساب</h2>
- <div class="card profile-card avatar-card">
+ if(v==='profile') out.innerHTML=` <div class="card profile-card avatar-card">
   <div class="avatar-wrap">
    <div class="avatar-circle" id="p-avatar-circle"><svg viewBox="0 0 24 24" width="36" height="36"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></div>
    <button class="avatar-edit-btn" id="p-avatar-btn" title="تغيير الصورة"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M4 20h4l10-10-4-4L4 16v4z"/></svg></button>
