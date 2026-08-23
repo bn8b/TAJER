@@ -44,15 +44,14 @@ async function render(v){
  const {data:{user}}=await supabase.auth.getUser();
  if(!user){return login();}
  if(v==='home') out.innerHTML=`<div class="card"><h3>الأصول</h3><div class="grid" id="assets"></div></div>`;
- if(v==='signals') out.innerHTML=`<h2>الإشارات</h2><div id="signals"><div class="card">جاري التحميل...</div></div>`;
- if(v==='notifications') out.innerHTML=`<h2>الجوائز</h2>
- <div class="card profile-card">
+ if(v==='signals') out.innerHTML=`<div id="signals"><div class="card">جاري التحميل...</div></div>`;
+ if(v==='notifications') out.innerHTML=` <div class="card profile-card">
   <div class="profile-label" style="margin-bottom:10px">رابط الدعوة</div>
   <p class="muted" style="margin:0 0 12px">شارك الرابط مع أصدقائك، وأي شخص يفتحه يوصله مباشرة لتطبيق TAJER.</p>
   <div class="code-row"><span class="user-code mono" id="p-reflink" style="font-size:12px">...</span></div>
   <div class="ref-actions"><button class="btn secondary" id="p-ref-copy">نسخ الرابط</button><button class="btn secondary" id="p-ref-share">مشاركة</button></div>
  </div>`;
- if(v==='subscription') out.innerHTML=`<h2>تفعيل الاشتراك</h2><div class="card"><h3>5 USDT / 30 يوم</h3><p class="muted">حوّل المبلغ إلى عنوان المحفظة الذي يحدده الأدمن ثم ارفع إثبات الدفع.</p><input id="network" class="input" placeholder="الشبكة (مثال: TRC20)"><br><br><input id="wallet" class="input" placeholder="عنوان المحفظة"><br><br><input id="txid" class="input" placeholder="TXID اختياري"><br><br><input id="shot" type="file" accept="image/*" class="input"><br><br><button id="pay" class="btn">إرسال طلب التفعيل</button></div>`;
+ if(v==='subscription') out.innerHTML=`<div class="card"><h3>5 USDT / 30 يوم</h3><p class="muted">حوّل المبلغ إلى عنوان المحفظة الذي يحدده الأدمن ثم ارفع إثبات الدفع.</p><input id="network" class="input" placeholder="الشبكة (مثال: TRC20)"><br><br><input id="wallet" class="input" placeholder="عنوان المحفظة"><br><br><input id="txid" class="input" placeholder="TXID اختياري"><br><br><input id="shot" type="file" accept="image/*" class="input"><br><br><button id="pay" class="btn">إرسال طلب التفعيل</button></div>`;
  if(v==='profile') out.innerHTML=` <div class="card profile-card avatar-card">
   <div class="avatar-wrap">
    <div class="avatar-circle" id="p-avatar-circle"><svg viewBox="0 0 24 24" width="36" height="36"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></div>
