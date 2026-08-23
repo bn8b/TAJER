@@ -51,3 +51,16 @@ table td,table th{padding:10px;border-bottom:1px solid var(--border);text-align:
 .nav-item.active{color:var(--accent)}
 .nav-item.active svg{stroke:var(--accent)}
 .container{padding-bottom:90px}
+.profile-card{padding:18px 20px}
+.profile-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.profile-row:last-child{border-bottom:0}
+.profile-label{color:var(--muted);font-size:13px}
+.profile-value{font-weight:700;font-size:15px}
+.sub-badge{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:#1a1010;border:1px solid var(--border);font-size:13px;font-weight:700;color:var(--danger)}
+.sub-badge .dot{width:8px;height:8px;border-radius:50%;background:var(--danger)}
+.sub-badge.active{background:rgba(23,214,147,.12);border-color:var(--accent-dim);color:var(--accent)}
+.sub-badge.active .dot{background:var(--accent);box-shadow:0 0 0 0 rgba(23,214,147,.6);animation:pulse 2s infinite}
+.code-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.user-code{font-size:18px;letter-spacing:2px;word-break:break-all;flex:1;min-width:180px}
+.copy-btn{width:auto;padding:10px 18px;flex:0 0 auto}
+@media(max-width:600px){.profile-value{font-size:14px}.user-code{font-size:15px;letter-spacing:1px}}

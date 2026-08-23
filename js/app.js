@@ -23,10 +23,23 @@ async function render(v){
  if(v==='home') out.innerHTML=`<h2>مرحباً بك في TAJER</h2><div class="grid"><div class="card"><div class="muted">حالة الاشتراك</div><h3 id="sub">جاري التحقق...</h3></div><div class="card"><div class="muted">كود المستخدم</div><h3 id="code">...</h3></div></div><div class="card"><h3>الأصول</h3><div class="grid" id="assets"></div></div>`;
  if(v==='signals') out.innerHTML=`<h2>الإشارات</h2><div id="signals"><div class="card">جاري التحميل...</div></div>`;
  if(v==='subscription') out.innerHTML=`<h2>تفعيل الاشتراك</h2><div class="card"><h3>5 USDT / 30 يوم</h3><p class="muted">حوّل المبلغ إلى عنوان المحفظة الذي يحدده الأدمن ثم ارفع إثبات الدفع.</p><input id="network" class="input" placeholder="الشبكة (مثال: TRC20)"><br><br><input id="wallet" class="input" placeholder="عنوان المحفظة"><br><br><input id="txid" class="input" placeholder="TXID اختياري"><br><br><input id="shot" type="file" accept="image/*" class="input"><br><br><button id="pay" class="btn">إرسال طلب التفعيل</button></div>`;
- if(v==='profile') out.innerHTML=`<h2>الحساب</h2><div class="card"><p>رقم الهاتف: ${esc(user.phone||'')}</p><p>معرف الحساب: ${esc(user.id)}</p></div>`;
+ if(v==='profile') out.innerHTML=`<h2>الحساب</h2>
+ <div class="card profile-card">
+  <div class="profile-row"><span class="profile-label">الاسم</span><span class="profile-value" id="p-name">...</span></div>
+  <div class="profile-row"><span class="profile-label">البريد الإلكتروني</span><span class="profile-value" id="p-email">...</span></div>
+  <div class="profile-row"><span class="profile-label">رقم الهاتف</span><span class="profile-value" id="p-phone">...</span></div>
+ </div>
+ <div class="card profile-card">
+  <div class="profile-row"><span class="profile-label">حالة الاشتراك</span><span class="sub-badge" id="p-sub"><span class="dot"></span><span id="p-sub-text">جاري التحقق...</span></span></div>
+ </div>
+ <div class="card profile-card">
+  <div class="profile-label" style="margin-bottom:10px">كود المستخدم</div>
+  <div class="code-row"><span class="user-code mono" id="p-code">................</span><button class="btn secondary copy-btn" id="p-copy">نسخ</button></div>
+ </div>`;
  if(v==='home') await loadHome();
  if(v==='signals') await loadSignals();
  if(v==='subscription') document.getElementById('pay').onclick=submitPayment;
+ if(v==='profile') await loadProfile(user);
 }
 function login(){
  app.innerHTML=`<div class="auth-wrap"><div class="auth-card">
@@ -85,6 +98,26 @@ async function loadHome(){
 async function loadSignals(){
  const {data:s,error}=await supabase.from('market_signals').select('*,assets(symbol,name)').eq('status','ACTIVE').order('created_at',{ascending:false});
  document.getElementById('signals').innerHTML=error?`<div class="card">${esc(error.message)}</div>`:(s||[]).map(x=>`<div class="card signal ${x.direction?.toLowerCase()}"><h3>${esc(x.direction)} — ${esc(x.assets?.symbol)}</h3><p>الدخول: ${esc(x.entry_price)}</p><p>SL: ${esc(x.stop_loss)} | TP1: ${esc(x.take_profit_1)} | TP2: ${esc(x.take_profit_2)}</p><p>القوة: ${esc(x.strength)}% — المخاطرة: ${esc(x.risk_level)}</p><p>اللوت المقترح: ${esc(x.suggested_lot)}</p><p class="muted">${esc(x.analysis)}</p></div>`).join('')||'<div class="card">لا توجد إشارات حالياً.</div>';
+}
+async function loadProfile(user){
+ const {data:p}=await supabase.from('profiles').select('full_name,phone,user_code').eq('id',user.id).maybeSingle();
+ document.getElementById('p-name').textContent=p?.full_name||'—';
+ document.getElementById('p-email').textContent=user.email||'—';
+ document.getElementById('p-phone').textContent=p?.phone||user.phone||'—';
+ const {data:s}=await supabase.from('subscriptions').select('status,expires_at').order('created_at',{ascending:false}).limit(1).maybeSingle();
+ const active=s?.status==='active';
+ const badge=document.getElementById('p-sub');
+ badge.classList.toggle('active',active);
+ document.getElementById('p-sub-text').textContent=active?`مفعل حتى ${new Date(s.expires_at).toLocaleDateString('ar-IQ')}`:'غير مفعل';
+ const code=p?.user_code||'';
+ document.getElementById('p-code').textContent=code||'سيُنشأ تلقائياً';
+ document.getElementById('p-copy').onclick=async()=>{
+  if(!code)return;
+  try{await navigator.clipboard.writeText(code);}catch(e){}
+  const btn=document.getElementById('p-copy');
+  const old=btn.textContent; btn.textContent='تم النسخ ✓';
+  setTimeout(()=>{btn.textContent=old;},1500);
+ };
 }
 async function submitPayment(){
  const file=document.getElementById('shot').files[0]; if(!file)return alert('ارفع صورة إثبات الدفع');
