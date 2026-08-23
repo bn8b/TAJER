@@ -37,7 +37,7 @@ function login(){
   const password=document.getElementById('password').value;
   if(!email||!password){alert('الرجاء إدخال البريد وكلمة المرور');return;}
   if(mode==='signup'){
-   const {error}=await supabase.auth.signUp({email,password});
+   const {error}=await supabase.auth.signUp({email,password,options:{emailRedirectTo:location.href}});
    if(error)alert(error.message);else otp(email);
   }else{
    const {error}=await supabase.auth.signInWithPassword({email,password});
