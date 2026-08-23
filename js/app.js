@@ -28,35 +28,36 @@ function login(){
  <h1 class="auth-title">TAJER</h1>
  <p class="auth-sub" id="mode-label">أدخل بياناتك لمتابعة إشارات التداول</p>
  <div class="auth-tabs"><button id="tab-signin" class="active">تسجيل الدخول</button><button id="tab-signup">إنشاء حساب</button></div>
+ <div class="field hidden" id="name-field"><label class="field-label">الاسم الكامل</label><input id="fullname" class="input" placeholder="أحمد محمد"></div>
  <div class="field"><label class="field-label">البريد الإلكتروني</label><div class="input-icon"><span>@</span><input id="email" class="input" type="email" placeholder="example@email.com"></div></div>
- <div class="field"><label class="field-label">كلمة المرور</label><div class="input-icon"><span>*</span><input id="password" class="input" type="password" placeholder="8 أحرف على الأقل"></div></div>
- <span class="optional-toggle" id="phone-toggle">+ إضافة رقم الهاتف (اختياري)</span>
  <div class="field hidden" id="phone-field"><label class="field-label">رقم الهاتف</label><div class="phone-row"><select id="cc"><option value="+964">🇮🇶 +964</option><option value="+966">🇸🇦 +966</option><option value="+971">🇦🇪 +971</option></select><input id="phone" class="input" placeholder="770 123 4567"></div></div>
+ <div class="field"><label class="field-label">كلمة المرور</label><div class="input-icon"><span>*</span><input id="password" class="input" type="password" placeholder="8 أحرف على الأقل"></div></div>
  <button id="submit" class="btn">دخول</button>
  </div></div>`;
  let mode='signin';
- const setMode=(m)=>{mode=m;document.getElementById('tab-signin').classList.toggle('active',m==='signin');document.getElementById('tab-signup').classList.toggle('active',m==='signup');document.getElementById('mode-label').textContent=m==='signin'?'أدخل بياناتك لمتابعة إشارات التداول':'خطوة واحدة تفصلك عن حسابك';document.getElementById('submit').textContent=m==='signin'?'دخول':'إنشاء حساب';};
+ const setMode=(m)=>{mode=m;document.getElementById('tab-signin').classList.toggle('active',m==='signin');document.getElementById('tab-signup').classList.toggle('active',m==='signup');document.getElementById('name-field').classList.toggle('hidden',m!=='signup');document.getElementById('phone-field').classList.toggle('hidden',m!=='signup');document.getElementById('mode-label').textContent=m==='signin'?'أدخل بياناتك لمتابعة إشارات التداول':'خطوة واحدة تفصلك عن حسابك';document.getElementById('submit').textContent=m==='signin'?'دخول':'إنشاء حساب';};
  document.getElementById('tab-signin').onclick=()=>setMode('signin');
  document.getElementById('tab-signup').onclick=()=>setMode('signup');
- document.getElementById('phone-toggle').onclick=()=>{document.getElementById('phone-field').classList.toggle('hidden');};
  document.getElementById('submit').onclick=async()=>{
   const email=document.getElementById('email').value.trim();
   const password=document.getElementById('password').value;
   if(!email||!password){alert('الرجاء إدخال البريد وكلمة المرور');return;}
   if(mode==='signup'){
-   const {error}=await supabase.auth.signUp({email,password,options:{emailRedirectTo:location.href}});
-   if(error)alert(error.message);else otp(email);
+   const fullname=document.getElementById('fullname').value.trim();
+   const cc=document.getElementById('cc').value;
+   const phoneRaw=document.getElementById('phone').value.trim();
+   if(!fullname||!phoneRaw){alert('الرجاء إدخال الاسم ورقم الهاتف');return;}
+   const phone=cc+phoneRaw.replace(/[^0-9]/g,'');
+   const {data,error}=await supabase.auth.signUp({email,password});
+   if(error){alert(error.message);return;}
+   const uid=data.user?.id;
+   if(uid){await supabase.from('profiles').update({full_name:fullname,phone:phone}).eq('id',uid);}
+   render('home');
   }else{
    const {error}=await supabase.auth.signInWithPassword({email,password});
    if(error)alert(error.message);else render('home');
   }
  };
-}
-function otp(email){
- app.innerHTML=`<div class="auth-wrap"><div class="auth-card">
- <h1 class="auth-title">رمز التحقق</h1>
- <p class="auth-sub">تم إرسال رابط التأكيد إلى ${esc(email)}، افتح بريدك واضغط على الرابط لتفعيل حسابك</p>
- </div></div>`;
 }
 async function loadHome(){
  const {data:p}=await supabase.from('profiles').select('user_code').maybeSingle(); document.getElementById('code').textContent=p?.user_code||'سيُنشأ تلقائياً';
