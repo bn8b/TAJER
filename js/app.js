@@ -12,11 +12,16 @@ function page(){
  <button class="nav-item" data-view="notifications"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0112 0c0 6 2 7 2 7H4s2-1 2-7"/><path d="M10 20a2 2 0 004 0"/></svg><span>الجوائز</span></button>
  <button class="nav-item" data-view="profile"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg><span>الحساب</span></button>
  </nav>`;
- document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{render(b.dataset.view);document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));b.classList.add('active');});
+ document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{setTopbarVisible(b.dataset.view);render(b.dataset.view);document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));b.classList.add('active');});
  document.getElementById('theme-toggle').onclick=toggleTheme;
- document.getElementById('topbar-avatar').onclick=()=>{render('profile');document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.querySelector('[data-view="profile"]').classList.add('active');};
+ document.getElementById('topbar-avatar').onclick=()=>{setTopbarVisible('profile');render('profile');document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.querySelector('[data-view="profile"]').classList.add('active');};
  loadTopbarAvatar();
+ setTopbarVisible('home');
  render('home');
+}
+function setTopbarVisible(v){
+ const tb=document.querySelector('.topbar');
+ if(tb)tb.style.display=v==='home'?'flex':'none';
 }
 async function loadTopbarAvatar(){
  const {data:{user}}=await supabase.auth.getUser();
