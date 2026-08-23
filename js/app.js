@@ -2,7 +2,7 @@ import {supabase} from './supabase.js';
 const app=document.getElementById('app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function page(){
- app.innerHTML=`<div class="topbar"><div class="brand">TAJER</div></div>
+ app.innerHTML=`<div class="topbar"><div class="brand">TAJER</div><button id="theme-toggle" class="icon-btn" title="الوضع الليلي/النهاري"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 3a9 9 0 109 9 7 7 0 01-9-9z"/></svg></button></div>
  <main class="container"><section id="view"></section></main>
  <nav class="bottom-nav">
  <button class="nav-item" data-view="home"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg><span>الرئيسية</span></button>
@@ -13,8 +13,24 @@ function page(){
  <button class="nav-item" data-view="profile"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg><span>الحساب</span></button>
  </nav>`;
  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{render(b.dataset.view);document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));b.classList.add('active');});
+ document.getElementById('theme-toggle').onclick=toggleTheme;
  render('home');
 }
+function applyTheme(){
+ const t=localStorage.getItem('tajer-theme')||'dark';
+ document.documentElement.setAttribute('data-theme',t);
+}
+function toggleTheme(){
+ const cur=localStorage.getItem('tajer-theme')||'dark';
+ const next=cur==='dark'?'light':'dark';
+ localStorage.setItem('tajer-theme',next);
+ applyTheme();
+}
+applyTheme();
+(function captureRef(){
+ const ref=new URLSearchParams(location.search).get('ref');
+ if(ref)localStorage.setItem('tajer-ref',ref);
+})();
 async function render(v){
  const out=document.getElementById('view');
  const {data:{user}}=await supabase.auth.getUser();
@@ -23,10 +39,17 @@ async function render(v){
  if(v==='signals') out.innerHTML=`<h2>الإشارات</h2><div id="signals"><div class="card">جاري التحميل...</div></div>`;
  if(v==='subscription') out.innerHTML=`<h2>تفعيل الاشتراك</h2><div class="card"><h3>5 USDT / 30 يوم</h3><p class="muted">حوّل المبلغ إلى عنوان المحفظة الذي يحدده الأدمن ثم ارفع إثبات الدفع.</p><input id="network" class="input" placeholder="الشبكة (مثال: TRC20)"><br><br><input id="wallet" class="input" placeholder="عنوان المحفظة"><br><br><input id="txid" class="input" placeholder="TXID اختياري"><br><br><input id="shot" type="file" accept="image/*" class="input"><br><br><button id="pay" class="btn">إرسال طلب التفعيل</button></div>`;
  if(v==='profile') out.innerHTML=`<h2>الحساب</h2>
+ <div class="card profile-card avatar-card">
+  <div class="avatar-wrap">
+   <div class="avatar-circle" id="p-avatar-circle"><svg viewBox="0 0 24 24" width="36" height="36"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+   <button class="avatar-edit-btn" id="p-avatar-btn" title="تغيير الصورة"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M4 20h4l10-10-4-4L4 16v4z"/></svg></button>
+   <input type="file" accept="image/*" id="p-avatar-input" class="hidden">
+  </div>
+ </div>
  <div class="card profile-card">
-  <div class="profile-row"><span class="profile-label">الاسم</span><span class="profile-value" id="p-name">...</span></div>
+  <div class="profile-row"><span class="profile-label">الاسم</span><span class="profile-editable"><span class="profile-value" id="p-name">...</span><button class="edit-btn" data-field="name" title="تعديل">✎</button></span></div>
   <div class="profile-row"><span class="profile-label">البريد الإلكتروني</span><span class="profile-value" id="p-email">...</span></div>
-  <div class="profile-row"><span class="profile-label">رقم الهاتف</span><span class="profile-value" id="p-phone">...</span></div>
+  <div class="profile-row"><span class="profile-label">رقم الهاتف</span><span class="profile-editable"><span class="profile-value" id="p-phone">...</span><button class="edit-btn" data-field="phone" title="تعديل">✎</button></span></div>
  </div>
  <div class="card profile-card">
   <div class="profile-row"><span class="profile-label">حالة الاشتراك</span><span class="sub-badge" id="p-sub"><span class="dot"></span><span id="p-sub-text">جاري التحقق...</span></span></div>
@@ -34,6 +57,15 @@ async function render(v){
  <div class="card profile-card">
   <div class="profile-label" style="margin-bottom:10px">كود المستخدم</div>
   <div class="code-row"><span class="user-code mono" id="p-code">................</span><button class="btn secondary copy-btn" id="p-copy">نسخ</button></div>
+ </div>
+ <div class="card profile-card">
+  <div class="profile-label" style="margin-bottom:10px">رابط الدعوة</div>
+  <div class="code-row"><span class="user-code mono" id="p-reflink" style="font-size:12px">...</span></div>
+  <div class="ref-actions"><button class="btn secondary" id="p-ref-copy">نسخ الرابط</button><button class="btn secondary" id="p-ref-share">مشاركة</button></div>
+ </div>
+ <div class="card profile-card">
+  <div class="profile-label" style="margin-bottom:12px">اللغة</div>
+  <div class="lang-row"><button class="lang-btn" data-lang="ar">🇮🇶 العربية</button><button class="lang-btn" data-lang="en">🇬🇧 English</button></div>
  </div>
  <button id="logout" class="btn danger">خروج</button>`;
  if(v==='home') await loadHome();
@@ -76,7 +108,7 @@ function login(){
     alert(msg);return;
    }
    const uid=data.user?.id;
-   if(uid){await supabase.from('profiles').update({full_name:fullname,phone:phone}).eq('id',uid);}
+   if(uid){await supabase.rpc('update_my_profile',{p_full_name:fullname,p_phone:phone});}
    await supabase.auth.signOut();
    login();
    setMode('signin');
@@ -97,10 +129,11 @@ async function loadSignals(){
  document.getElementById('signals').innerHTML=error?`<div class="card">${esc(error.message)}</div>`:(s||[]).map(x=>`<div class="card signal ${x.direction?.toLowerCase()}"><h3>${esc(x.direction)} — ${esc(x.assets?.symbol)}</h3><p>الدخول: ${esc(x.entry_price)}</p><p>SL: ${esc(x.stop_loss)} | TP1: ${esc(x.take_profit_1)} | TP2: ${esc(x.take_profit_2)}</p><p>القوة: ${esc(x.strength)}% — المخاطرة: ${esc(x.risk_level)}</p><p>اللوت المقترح: ${esc(x.suggested_lot)}</p><p class="muted">${esc(x.analysis)}</p></div>`).join('')||'<div class="card">لا توجد إشارات حالياً.</div>';
 }
 async function loadProfile(user){
- const {data:p}=await supabase.from('profiles').select('full_name,phone,user_code').eq('id',user.id).maybeSingle();
+ const {data:p}=await supabase.from('profiles').select('full_name,phone,user_code,avatar_url').eq('id',user.id).maybeSingle();
  document.getElementById('p-name').textContent=p?.full_name||'—';
  document.getElementById('p-email').textContent=user.email||'—';
  document.getElementById('p-phone').textContent=p?.phone||user.phone||'—';
+ if(p?.avatar_url){document.getElementById('p-avatar-circle').innerHTML=`<img src="${esc(p.avatar_url)}" alt="avatar">`;}
  const {data:s}=await supabase.from('subscriptions').select('status,expires_at').order('created_at',{ascending:false}).limit(1).maybeSingle();
  const active=s?.status==='active';
  const badge=document.getElementById('p-sub');
@@ -115,6 +148,63 @@ async function loadProfile(user){
   const old=btn.textContent; btn.textContent='تم النسخ ✓';
   setTimeout(()=>{btn.textContent=old;},1500);
  };
+ // Referral link
+ const refLink=code?`${location.origin}${location.pathname}?ref=${code}`:'';
+ document.getElementById('p-reflink').textContent=refLink||'سيتوفر الرابط بعد إنشاء الكود';
+ document.getElementById('p-ref-copy').onclick=async()=>{
+  if(!refLink)return;
+  try{await navigator.clipboard.writeText(refLink);}catch(e){}
+  const btn=document.getElementById('p-ref-copy');
+  const old=btn.textContent; btn.textContent='تم النسخ ✓';
+  setTimeout(()=>{btn.textContent=old;},1500);
+ };
+ document.getElementById('p-ref-share').onclick=async()=>{
+  if(!refLink)return;
+  if(navigator.share){try{await navigator.share({title:'TAJER',text:'انضم لتطبيق TAJER لمتابعة إشارات التداول',url:refLink});}catch(e){}}
+  else{try{await navigator.clipboard.writeText(refLink);alert('تم نسخ الرابط');}catch(e){}}
+ };
+ // Editable name/phone
+ document.querySelectorAll('.edit-btn').forEach(btn=>btn.onclick=()=>{
+  const field=btn.dataset.field;
+  const target=field==='name'?document.getElementById('p-name'):document.getElementById('p-phone');
+  const current=target.textContent==='—'?'':target.textContent;
+  const wrap=target.parentElement;
+  wrap.innerHTML=`<input class="edit-input" id="edit-input-${field}" value="${esc(current)}"><button class="btn secondary edit-save" id="edit-save-${field}">حفظ</button>`;
+  document.getElementById(`edit-input-${field}`).focus();
+  document.getElementById(`edit-save-${field}`).onclick=async()=>{
+   const val=document.getElementById(`edit-input-${field}`).value.trim();
+   const payload=field==='name'?{p_full_name:val}:{p_phone:val};
+   const {error}=await supabase.rpc('update_my_profile',payload);
+   if(error){alert(error.message);return;}
+   await loadProfile(user);
+  };
+ });
+ // Avatar upload
+ document.getElementById('p-avatar-btn').onclick=()=>document.getElementById('p-avatar-input').click();
+ document.getElementById('p-avatar-input').onchange=async(e)=>{
+  const file=e.target.files[0]; if(!file)return;
+  if(file.size>3*1024*1024){alert('حجم الصورة كبير، الحد الأقصى 3MB');return;}
+  const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+  const path=`${user.id}/avatar.${ext}`;
+  const up=await supabase.storage.from('avatars').upload(path,file,{upsert:true});
+  if(up.error){alert(up.error.message);return;}
+  const {data:pub}=supabase.storage.from('avatars').getPublicUrl(path);
+  const url=pub.publicUrl+`?t=${Date.now()}`;
+  const {error}=await supabase.rpc('update_my_profile',{p_avatar_url:url});
+  if(error){alert(error.message);return;}
+  document.getElementById('p-avatar-circle').innerHTML=`<img src="${esc(url)}" alt="avatar">`;
+ };
+ // Language buttons (UI only for now)
+ const savedLang=localStorage.getItem('tajer-lang')||'ar';
+ document.querySelectorAll('.lang-btn').forEach(b=>{
+  b.classList.toggle('active',b.dataset.lang===savedLang);
+  b.onclick=()=>{
+   localStorage.setItem('tajer-lang',b.dataset.lang);
+   document.querySelectorAll('.lang-btn').forEach(x=>x.classList.remove('active'));
+   b.classList.add('active');
+   if(b.dataset.lang==='en')alert('دعم اللغة الإنجليزية قيد التطوير، سيتم تفعيله قريباً');
+  };
+ });
  document.getElementById('logout').onclick=async()=>{await supabase.auth.signOut();location.reload()};
 }
 async function submitPayment(){
