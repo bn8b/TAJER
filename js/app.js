@@ -49,7 +49,14 @@ function login(){
    if(!fullname||!phoneRaw){alert('الرجاء إدخال الاسم ورقم الهاتف');return;}
    const phone=cc+phoneRaw.replace(/[^0-9]/g,'');
    const {data,error}=await supabase.auth.signUp({email,password});
-   if(error){alert(error.message);return;}
+   if(error){
+    let msg=error.message;
+    if(msg.includes('already registered')||msg.includes('User already'))msg='⚠️ هذا البريد الإلكتروني مسجل مسبقاً بتطبيق تاجر';
+    else if(msg.includes('Password'))msg='⚠️ كلمة المرور ضعيفة، يجب أن تكون 8 أحرف على الأقل';
+    else if(msg.includes('Invalid'))msg='⚠️ البريد الإلكتروني غير صالح';
+    else msg='⚠️ '+msg;
+    alert(msg);return;
+   }
    const uid=data.user?.id;
    if(uid){await supabase.from('profiles').update({full_name:fullname,phone:phone}).eq('id',uid);}
    render('home');
