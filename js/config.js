@@ -1,6 +1,6 @@
 export const CONFIG={
- SUPABASE_URL:'https://YOUR-PROJECT.supabase.co',
- SUPABASE_ANON_KEY:'YOUR_PUBLISHABLE_OR_ANON_KEY',
+ SUPABASE_URL:'https://lpyoaarxydmkjlrdvgbw.supabase.co',
+ SUPABASE_ANON_KEY:'sb_publishable_MusUKfGOzipP4-A91McnkA_eSJao_-J',
  APP_NAME:'TAJER',
  SUBSCRIPTION_PRICE:5,
  SUBSCRIPTION_DAYS:30,
