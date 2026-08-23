@@ -43,7 +43,7 @@ async function render(v){
  const out=document.getElementById('view');
  const {data:{user}}=await supabase.auth.getUser();
  if(!user){return login();}
- if(v==='home') out.innerHTML=`<h2>مرحباً بك في TAJER</h2><div class="card"><h3>الأصول</h3><div class="grid" id="assets"></div></div>`;
+ if(v==='home') out.innerHTML=`<div class="card"><h3>الأصول</h3><div class="grid" id="assets"></div></div>`;
  if(v==='signals') out.innerHTML=`<h2>الإشارات</h2><div id="signals"><div class="card">جاري التحميل...</div></div>`;
  if(v==='subscription') out.innerHTML=`<h2>تفعيل الاشتراك</h2><div class="card"><h3>5 USDT / 30 يوم</h3><p class="muted">حوّل المبلغ إلى عنوان المحفظة الذي يحدده الأدمن ثم ارفع إثبات الدفع.</p><input id="network" class="input" placeholder="الشبكة (مثال: TRC20)"><br><br><input id="wallet" class="input" placeholder="عنوان المحفظة"><br><br><input id="txid" class="input" placeholder="TXID اختياري"><br><br><input id="shot" type="file" accept="image/*" class="input"><br><br><button id="pay" class="btn">إرسال طلب التفعيل</button></div>`;
  if(v==='profile') out.innerHTML=`<h2>الحساب</h2>
