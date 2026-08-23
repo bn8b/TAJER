@@ -2,7 +2,7 @@ import {supabase} from './supabase.js';
 const app=document.getElementById('app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function page(){
- app.innerHTML=`<div class="topbar"><div class="brand">TAJER</div><button id="logout" class="btn secondary">خروج</button></div>
+ app.innerHTML=`<div class="topbar"><div class="brand">TAJER</div></div>
  <main class="container"><section id="view"></section></main>
  <nav class="bottom-nav">
  <button class="nav-item" data-view="home"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg><span>الرئيسية</span></button>
@@ -13,14 +13,13 @@ function page(){
  <button class="nav-item" data-view="profile"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg><span>الحساب</span></button>
  </nav>`;
  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{render(b.dataset.view);document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));b.classList.add('active');});
- document.getElementById('logout').onclick=async()=>{await supabase.auth.signOut();location.reload()};
  render('home');
 }
 async function render(v){
  const out=document.getElementById('view');
  const {data:{user}}=await supabase.auth.getUser();
  if(!user){return login();}
- if(v==='home') out.innerHTML=`<h2>مرحباً بك في TAJER</h2><div class="grid"><div class="card"><div class="muted">حالة الاشتراك</div><h3 id="sub">جاري التحقق...</h3></div><div class="card"><div class="muted">كود المستخدم</div><h3 id="code">...</h3></div></div><div class="card"><h3>الأصول</h3><div class="grid" id="assets"></div></div>`;
+ if(v==='home') out.innerHTML=`<h2>مرحباً بك في TAJER</h2><div class="card"><h3>الأصول</h3><div class="grid" id="assets"></div></div>`;
  if(v==='signals') out.innerHTML=`<h2>الإشارات</h2><div id="signals"><div class="card">جاري التحميل...</div></div>`;
  if(v==='subscription') out.innerHTML=`<h2>تفعيل الاشتراك</h2><div class="card"><h3>5 USDT / 30 يوم</h3><p class="muted">حوّل المبلغ إلى عنوان المحفظة الذي يحدده الأدمن ثم ارفع إثبات الدفع.</p><input id="network" class="input" placeholder="الشبكة (مثال: TRC20)"><br><br><input id="wallet" class="input" placeholder="عنوان المحفظة"><br><br><input id="txid" class="input" placeholder="TXID اختياري"><br><br><input id="shot" type="file" accept="image/*" class="input"><br><br><button id="pay" class="btn">إرسال طلب التفعيل</button></div>`;
  if(v==='profile') out.innerHTML=`<h2>الحساب</h2>
@@ -35,7 +34,8 @@ async function render(v){
  <div class="card profile-card">
   <div class="profile-label" style="margin-bottom:10px">كود المستخدم</div>
   <div class="code-row"><span class="user-code mono" id="p-code">................</span><button class="btn secondary copy-btn" id="p-copy">نسخ</button></div>
- </div>`;
+ </div>
+ <button id="logout" class="btn danger">خروج</button>`;
  if(v==='home') await loadHome();
  if(v==='signals') await loadSignals();
  if(v==='subscription') document.getElementById('pay').onclick=submitPayment;
@@ -89,9 +89,6 @@ function login(){
  };
 }
 async function loadHome(){
- const {data:p}=await supabase.from('profiles').select('user_code').maybeSingle(); document.getElementById('code').textContent=p?.user_code||'سيُنشأ تلقائياً';
- const {data:s}=await supabase.from('subscriptions').select('status,expires_at').order('created_at',{ascending:false}).limit(1).maybeSingle();
- document.getElementById('sub').textContent=s?.status==='active'?`فعال حتى ${new Date(s.expires_at).toLocaleDateString('ar-IQ')}`:'غير فعال';
  const {data:a}=await supabase.from('assets').select('*').eq('enabled',true).order('sort_order');
  document.getElementById('assets').innerHTML=(a||[]).map(x=>`<div class="card"><b>${esc(x.symbol)}</b><p class="muted">${esc(x.name)}</p><button class="btn secondary" onclick="alert('سيتم فتح الشارت عند ربط Market Data API')">فتح الشارت</button></div>`).join('');
 }
@@ -118,6 +115,7 @@ async function loadProfile(user){
   const old=btn.textContent; btn.textContent='تم النسخ ✓';
   setTimeout(()=>{btn.textContent=old;},1500);
  };
+ document.getElementById('logout').onclick=async()=>{await supabase.auth.signOut();location.reload()};
 }
 async function submitPayment(){
  const file=document.getElementById('shot').files[0]; if(!file)return alert('ارفع صورة إثبات الدفع');
