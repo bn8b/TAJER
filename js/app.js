@@ -2,7 +2,7 @@ import {supabase} from './supabase.js';
 const app=document.getElementById('app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function page(){
- app.innerHTML=`<div class="topbar"><div class="brand">TAJER</div><button id="theme-toggle" class="icon-btn" title="الوضع الليلي/النهاري"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 3a9 9 0 109 9 7 7 0 01-9-9z"/></svg></button></div>
+ app.innerHTML=`<div class="topbar"><div class="brand">TAJER</div><div class="topbar-actions"><button id="theme-toggle" class="icon-btn" title="الوضع الليلي/النهاري"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 3a9 9 0 109 9 7 7 0 01-9-9z"/></svg></button><button id="topbar-avatar" class="topbar-avatar" title="الحساب"><svg viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></button></div></div>
  <main class="container"><section id="view"></section></main>
  <nav class="bottom-nav">
  <button class="nav-item" data-view="home"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg><span>الرئيسية</span></button>
@@ -14,7 +14,15 @@ function page(){
  </nav>`;
  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{render(b.dataset.view);document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));b.classList.add('active');});
  document.getElementById('theme-toggle').onclick=toggleTheme;
+ document.getElementById('topbar-avatar').onclick=()=>{render('profile');document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.querySelector('[data-view="profile"]').classList.add('active');};
+ loadTopbarAvatar();
  render('home');
+}
+async function loadTopbarAvatar(){
+ const {data:{user}}=await supabase.auth.getUser();
+ if(!user)return;
+ const {data:p}=await supabase.from('profiles').select('avatar_url').eq('id',user.id).maybeSingle();
+ if(p?.avatar_url){const el=document.getElementById('topbar-avatar');if(el)el.innerHTML=`<img src="${esc(p.avatar_url)}" alt="avatar">`;}
 }
 function applyTheme(){
  const t=localStorage.getItem('tajer-theme')||'dark';
@@ -49,7 +57,7 @@ async function render(v){
  <div class="card profile-card">
   <div class="profile-row"><span class="profile-label">الاسم</span><span class="profile-editable"><span class="profile-value" id="p-name">...</span><button class="edit-btn" data-field="name" title="تعديل">✎</button></span></div>
   <div class="profile-row"><span class="profile-label">البريد الإلكتروني</span><span class="profile-value" id="p-email">...</span></div>
-  <div class="profile-row"><span class="profile-label">رقم الهاتف</span><span class="profile-editable"><span class="profile-value" id="p-phone">...</span><button class="edit-btn" data-field="phone" title="تعديل">✎</button></span></div>
+  <div class="profile-row"><span class="profile-label">رقم الهاتف</span><span class="profile-value" id="p-phone">...</span></div>
  </div>
  <div class="card profile-card">
   <div class="profile-row"><span class="profile-label">حالة الاشتراك</span><span class="sub-badge" id="p-sub"><span class="dot"></span><span id="p-sub-text">جاري التحقق...</span></span></div>
@@ -193,6 +201,7 @@ async function loadProfile(user){
   const {error}=await supabase.rpc('update_my_profile',{p_avatar_url:url});
   if(error){alert(error.message);return;}
   document.getElementById('p-avatar-circle').innerHTML=`<img src="${esc(url)}" alt="avatar">`;
+  const tb=document.getElementById('topbar-avatar'); if(tb)tb.innerHTML=`<img src="${esc(url)}" alt="avatar">`;
  };
  // Language buttons (UI only for now)
  const savedLang=localStorage.getItem('tajer-lang')||'ar';

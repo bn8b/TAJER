@@ -87,3 +87,8 @@ table td,table th{padding:10px;border-bottom:1px solid var(--border);text-align:
 .lang-btn{flex:1;border:1px solid var(--border);background:#16283b;color:var(--text);border-radius:12px;padding:12px;cursor:pointer;font-family:'Tajawal',sans-serif;font-weight:700;font-size:14px}
 .lang-btn.active{border-color:var(--accent);background:rgba(23,214,147,.12);color:var(--accent)}
 :root[data-theme="light"] .lang-btn{background:#eef2f6}
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.topbar-avatar{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:#16283b;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;padding:0}
+.topbar-avatar svg{fill:var(--muted)}
+.topbar-avatar img{width:100%;height:100%;object-fit:cover}
+:root[data-theme="light"] .topbar-avatar{background:#eef2f6}
