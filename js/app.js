@@ -59,7 +59,11 @@ function login(){
    }
    const uid=data.user?.id;
    if(uid){await supabase.from('profiles').update({full_name:fullname,phone:phone}).eq('id',uid);}
-   render('home');
+   await supabase.auth.signOut();
+   login();
+   setMode('signin');
+   document.getElementById('email').value=email;
+   document.getElementById('password').value=password;
   }else{
    const {error}=await supabase.auth.signInWithPassword({email,password});
    if(error)alert(error.message);else render('home');
