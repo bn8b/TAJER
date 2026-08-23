@@ -3,11 +3,16 @@ const app=document.getElementById('app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function page(){
  app.innerHTML=`<div class="topbar"><div class="brand">TAJER</div><button id="logout" class="btn secondary">خروج</button></div>
- <main class="container"><div class="nav">
- <button class="btn" data-view="home">الرئيسية</button><button class="btn secondary" data-view="signals">الإشارات</button>
- <button class="btn secondary" data-view="subscription">الاشتراك</button><button class="btn secondary" data-view="profile">الحساب</button>
- </div><section id="view"></section></main>`;
- document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>render(b.dataset.view));
+ <main class="container"><section id="view"></section></main>
+ <nav class="bottom-nav">
+ <button class="nav-item" data-view="home"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg><span>الرئيسية</span></button>
+ <button class="nav-item" data-view="signals"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/></svg><span>الإشارات</span></button>
+ <button class="nav-item" data-view="assets"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>الأصول</span></button>
+ <button class="nav-item" data-view="subscription"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg><span>الاشتراك</span></button>
+ <button class="nav-item" data-view="notifications"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0112 0c0 6 2 7 2 7H4s2-1 2-7"/><path d="M10 20a2 2 0 004 0"/></svg><span>الإشعارات</span></button>
+ <button class="nav-item" data-view="profile"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg><span>الحساب</span></button>
+ </nav>`;
+ document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{render(b.dataset.view);document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));b.classList.add('active');});
  document.getElementById('logout').onclick=async()=>{await supabase.auth.signOut();location.reload()};
  render('home');
 }
@@ -90,3 +95,4 @@ async function submitPayment(){
  if(error)alert(error.message);else alert('تم إرسال طلب التفعيل للأدمن');
 }
 supabase.auth.onAuthStateChange((_e,session)=>{if(session)page()}); page();
+setTimeout(()=>{const h=document.querySelector('[data-view="home"]');if(h)h.classList.add('active');},50);
